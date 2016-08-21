@@ -1,0 +1,31 @@
+{
+  "name": "innonews",
+  "version": "1.0.0",
+  "description": "view news on your innovaphone",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/_mocha.cmd"
+  },
+  "keywords": [
+    "news",
+    "innovaphone"
+  ],
+  "author": "robin.lgz@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "jimp": "^0.2.27",
+    "koa": "^2.0.0",
+    "koa-send": "^3.2.0",
+    "mkdirp": "^0.5.1",
+    "request": "^2.74.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.11.4",
+    "babel-plugin-transform-async-to-generator": "^6.8.0",
+    "babel-plugin-transform-es2015-arrow-functions": "^6.8.0",
+    "babel-polyfill": "^6.13.0",
+    "babel-preset-es2015": "^6.13.2",
+    "chai": "^3.5.0",
+    "mocha": "^3.0.2"
+  }
+}
