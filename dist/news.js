@@ -15,8 +15,6 @@ News.prototype.get = function (source, sortBy) {
             url: 'https://newsapi.org/v1/articles?source=' + source + '&apiKey=' + API_KEY + '&sortBy=' + sortBy,
             json: true
         }, function (err, response, body) {
-            //console.log(response.statusCode); // 200
-            //console.log(response.headers['content-type']); // 'image/png'
             resolve(body);
         }).on('error', function (err) {
             reject(err);
@@ -26,4 +24,4 @@ News.prototype.get = function (source, sortBy) {
 
 module.exports = News;
 
-//# sourceMappingURL=news-compiled.js.map
+//# sourceMappingURL=news.js.map

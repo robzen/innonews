@@ -15,6 +15,7 @@
   "dependencies": {
     "jimp": "^0.2.27",
     "koa": "^2.0.0",
+    "koa-router": "^7.0.1",
     "koa-send": "^3.2.0",
     "mkdirp": "^0.5.1",
     "request": "^2.74.0"

@@ -13,8 +13,6 @@ News.prototype.get = (source, sortBy) => {
             url: `https://newsapi.org/v1/articles?source=${source}&apiKey=${API_KEY}&sortBy=${sortBy}`,
             json: true
         }, (err, response, body) => {
-                //console.log(response.statusCode); // 200
-                //console.log(response.headers['content-type']); // 'image/png'
                 resolve(body);
             }).on('error', err => {
                 reject(err);

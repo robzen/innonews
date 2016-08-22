@@ -1,11 +1,13 @@
 require("babel-polyfill");
 import Koa from 'koa';
 import send from 'koa-send';
+import Router from 'koa-router';
 import News from './news';
 import ImageUtils from './image-utils';
 import User from './user';
 
 const app = new Koa();
+const router = new Router();
 const news = new News();
 const imageUtils = new ImageUtils();
 
@@ -34,12 +36,14 @@ app.use(async (ctx, next) => {
     await next();
 });
 
-//serving images
-app.use(async ctx => {
-    //update news images if updateInterval time is reached
+app.use(router.routes());
+
+router.get('/', async (ctx, next) => {
+//update news images if updateInterval time is reached
     let updateInterval = ctx.state.user.getSettings().updateMinutes;
     let lastUpdate = ctx.state.user.getLastUpdate();
     if(lastUpdate + updateInterval*60*1000 <= Date.now()) {
+        await imageUtils.deleteImages('images/'+ctx.state.user.getIp()); //delete old images
         await getNewsImages(ctx.state.user);
     }
 
@@ -58,10 +62,12 @@ const getUser = async (users, ip, userAgent) => {
         if(existingUser.getIp() === ip) { return existingUser; }
     }
 
+    //register new user and download news images
     let newUser = new User(ip, userAgent);
     users.push(newUser);
-    await getNewsImages(newUser);
     console.log(`new user registered: IP: ${ip}, Innovaphone Version: ${newUser.getInnovaphoneVersion()}`);
+    await imageUtils.deleteImages('images/'+newUser.getIp());  //delete old images
+    await getNewsImages(newUser);
 
     return newUser;
 };
@@ -71,7 +77,7 @@ const getNewsImages = async user => {
 
     return new Promise((resolve, reject) => {
         news.get(user.getSettings().newsSource, 'top').then(newsResponse => {
-            let displaySize = user.getDisplaySize();
+            let displaySettings = user.getDisplaySettings();
 
             user.setLastUpdate(Date.now());
             user.resetImages();
@@ -81,13 +87,13 @@ const getNewsImages = async user => {
                     imageUtils.download(article.urlToImage, `images/${user.getIp()}/${i}`)
                         .then(fileName => {
                             //console.log(`image ${i} downloaded.`);
-                            return imageUtils.edit(fileName, displaySize.width, displaySize.height, article.title);
+                            return imageUtils.edit(fileName, displaySettings.width, displaySettings.height, displaySettings.paddingBottom, article.title);
                         })
                         .then((imgFile, promiseError) => {
                             if(promiseError) {
                                 console.log('error while getting image', err);
                             } else {
-                                //console.log(`image ${imgFile} edited.`);
+                                console.log(`image ${imgFile} added.`);
                                 user.addImage(imgFile);
                             }
 

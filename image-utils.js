@@ -1,3 +1,4 @@
+require("babel-polyfill");
 const Jimp = require('jimp');
 const request = require('request');
 const fs = require('fs');
@@ -35,7 +36,7 @@ ImageUtils.prototype.download = (imageUrl, fileName) => {
     });
 };
 
-ImageUtils.prototype.edit = (imgFile, width, height, text) => {
+ImageUtils.prototype.edit = (imgFile, width, height, paddingBottom, text) => {
     const txtPadding = 6, fontSize = 16;
     const textHeight = ((text.length * fontSize) / width) * fontSize + txtPadding;
     const backgroundImgFileName = 'txtBg.png';
@@ -44,14 +45,14 @@ ImageUtils.prototype.edit = (imgFile, width, height, text) => {
         Jimp.read(imgFile)
             .then(img => {
                 //resize the image
-                img.cover(width, height).quality(100);
+                img.cover(width, height, Jimp.VERTICAL_ALIGN_TOP).quality(100);
                 return img;
             })
             .then(img => {
                 //add background image at the bottom
                 return Jimp.read(backgroundImgFileName)
                     .then((txtBgImg) => {
-                        return img.composite(txtBgImg, 0, height - textHeight);
+                        return img.composite(txtBgImg, 0, height - textHeight - paddingBottom);
                     });
             })
             .then(img => {
@@ -59,7 +60,7 @@ ImageUtils.prototype.edit = (imgFile, width, height, text) => {
                 //if the font gets changed don't forget to change the fontSize const too
                 return Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
                     .then(font => {
-                        img.print(font, txtPadding, height - textHeight + txtPadding, text, width - txtPadding);
+                        img.print(font, txtPadding, height - textHeight - paddingBottom + txtPadding, text, width - txtPadding);
                         return img;
                     });
             })
@@ -71,6 +72,30 @@ ImageUtils.prototype.edit = (imgFile, width, height, text) => {
             .catch(err => {
                 reject(err);
             })
+    });
+};
+
+ImageUtils.prototype.deleteImages = async imageFolder => {
+    return new Promise((resolve, reject) => {
+        fs.readdir(imageFolder, (err, files) => {
+            if(err) {
+                reject('error while deleting images: '+err);
+            } else {
+                if(files.length <= 0) {
+                    resolve(0);
+                } else {
+                    files.forEach((fileName, i) => {
+                        fs.unlink(imageFolder+'/'+fileName, err => {
+                            if(err) { console.log('could not delete file '+fileName); }
+                        });
+
+                        if(i+1 >= files.length) {
+                            resolve(files.length);
+                        }
+                    });
+                }
+            }
+        });
     });
 };
 

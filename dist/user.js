@@ -3,7 +3,7 @@
 function User(ip, userAgent) {
     var lastUpdate = 0;
     var settings = {
-        newsSource: 'spiegel-online',
+        newsSource: 'google-news',
         updateMinutes: 10
     };
     var imageFolder = {
@@ -22,17 +22,17 @@ function User(ip, userAgent) {
         }
     }(userAgent);
 
-    var displaySize = function (innovaphoneVersion) {
+    var displaySettings = function (innovaphoneVersion) {
         switch (innovaphoneVersion) {
             case 'IP111':
             case 'IP222':
             case 'IP241':
-                return { width: 320, height: 240 };
+                return { width: 320, height: 240, paddingBottom: 40 };
             case 'IP232':
-                return { width: 480, height: 272 };
+                return { width: 480, height: 272, paddingBottom: 40 };
         }
 
-        return { width: 400, height: 300 };
+        return { width: 400, height: 300, paddingBottom: 0 };
     }(innovaphoneVersion);
 
     this.getIp = function () {
@@ -41,8 +41,8 @@ function User(ip, userAgent) {
     this.getInnovaphoneVersion = function () {
         return innovaphoneVersion;
     };
-    this.getDisplaySize = function () {
-        return displaySize;
+    this.getDisplaySettings = function () {
+        return displaySettings;
     };
     this.getLastUpdate = function () {
         return lastUpdate;
@@ -82,4 +82,4 @@ function User(ip, userAgent) {
 
 module.exports = User;
 
-//# sourceMappingURL=user-compiled.js.map
+//# sourceMappingURL=user.js.map

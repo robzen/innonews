@@ -1,7 +1,7 @@
 function User(ip, userAgent) {
     let lastUpdate = 0;
     let settings = {
-        newsSource: 'spiegel-online',
+        newsSource: 'google-news',
         updateMinutes: 10
     };
     let imageFolder = {
@@ -20,22 +20,22 @@ function User(ip, userAgent) {
         }
     })(userAgent);
 
-    const displaySize = (innovaphoneVersion => {
+    const displaySettings = (innovaphoneVersion => {
         switch(innovaphoneVersion) {
             case 'IP111':
             case 'IP222':
             case 'IP241':
-                return { width: 320, height: 240 };
+                return { width: 320, height: 240, paddingBottom: 40 };
             case 'IP232':
-                return { width: 480, height: 272 };
+                return { width: 480, height: 272, paddingBottom: 40 };
         }
 
-        return { width: 400, height: 300 };
+        return { width: 400, height: 300, paddingBottom: 0 };
     })(innovaphoneVersion);
 
     this.getIp = () => { return ip; };
     this.getInnovaphoneVersion = () => { return innovaphoneVersion; };
-    this.getDisplaySize = () => { return displaySize; };
+    this.getDisplaySettings = () => { return displaySettings; };
     this.getLastUpdate = () => { return lastUpdate; };
     this.setLastUpdate = timestamp => { lastUpdate = timestamp };
     this.getSettings = () => { return settings; };

@@ -8,6 +8,10 @@ var _koaSend = require('koa-send');
 
 var _koaSend2 = _interopRequireDefault(_koaSend);
 
+var _koaRouter = require('koa-router');
+
+var _koaRouter2 = _interopRequireDefault(_koaRouter);
+
 var _news = require('./news');
 
 var _news2 = _interopRequireDefault(_news);
@@ -28,6 +32,7 @@ require("babel-polyfill");
 
 
 var app = new _koa2.default();
+var router = new _koaRouter2.default();
 var news = new _news2.default();
 var imageUtils = new _imageUtils2.default();
 
@@ -103,9 +108,10 @@ app.use(function () {
     };
 }());
 
-//serving images
-app.use(function () {
-    var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(ctx) {
+app.use(router.routes());
+
+router.get('/', function () {
+    var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(ctx, next) {
         var updateInterval, lastUpdate;
         return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
@@ -116,18 +122,22 @@ app.use(function () {
                         lastUpdate = ctx.state.user.getLastUpdate();
 
                         if (!(lastUpdate + updateInterval * 60 * 1000 <= Date.now())) {
-                            _context3.next = 5;
+                            _context3.next = 7;
                             break;
                         }
 
                         _context3.next = 5;
-                        return getNewsImages(ctx.state.user);
+                        return imageUtils.deleteImages('images/' + ctx.state.user.getIp());
 
                     case 5:
                         _context3.next = 7;
-                        return (0, _koaSend2.default)(ctx, ctx.state.user.getNextImage());
+                        return getNewsImages(ctx.state.user);
 
                     case 7:
+                        _context3.next = 9;
+                        return (0, _koaSend2.default)(ctx, ctx.state.user.getNextImage());
+
+                    case 9:
                     case 'end':
                         return _context3.stop();
                 }
@@ -135,7 +145,7 @@ app.use(function () {
         }, _callee3, undefined);
     }));
 
-    return function (_x5) {
+    return function (_x5, _x6) {
         return _ref3.apply(this, arguments);
     };
 }());
@@ -174,18 +184,23 @@ var getUser = function () {
                         break;
 
                     case 8:
+
+                        //register new user and download news images
                         newUser = new _user2.default(ip, userAgent);
 
                         users.push(newUser);
-                        _context4.next = 12;
+                        console.log('new user registered: IP: ' + ip + ', Innovaphone Version: ' + newUser.getInnovaphoneVersion());
+                        _context4.next = 13;
+                        return imageUtils.deleteImages('images/' + newUser.getIp());
+
+                    case 13:
+                        _context4.next = 15;
                         return getNewsImages(newUser);
 
-                    case 12:
-                        console.log('new user registered: IP: ' + ip + ', Innovaphone Version: ' + newUser.getInnovaphoneVersion());
-
+                    case 15:
                         return _context4.abrupt('return', newUser);
 
-                    case 14:
+                    case 16:
                     case 'end':
                         return _context4.stop();
                 }
@@ -193,7 +208,7 @@ var getUser = function () {
         }, _callee4, undefined);
     }));
 
-    return function getUser(_x6, _x7, _x8) {
+    return function getUser(_x7, _x8, _x9) {
         return _ref4.apply(this, arguments);
     };
 }();
@@ -208,7 +223,7 @@ var getNewsImages = function () {
 
                         return _context5.abrupt('return', new Promise(function (resolve, reject) {
                             news.get(user.getSettings().newsSource, 'top').then(function (newsResponse) {
-                                var displaySize = user.getDisplaySize();
+                                var displaySettings = user.getDisplaySettings();
 
                                 user.setLastUpdate(Date.now());
                                 user.resetImages();
@@ -218,12 +233,12 @@ var getNewsImages = function () {
                                         //only articles with images
                                         imageUtils.download(article.urlToImage, 'images/' + user.getIp() + '/' + i).then(function (fileName) {
                                             //console.log(`image ${i} downloaded.`);
-                                            return imageUtils.edit(fileName, displaySize.width, displaySize.height, article.title);
+                                            return imageUtils.edit(fileName, displaySettings.width, displaySettings.height, displaySettings.paddingBottom, article.title);
                                         }).then(function (imgFile, promiseError) {
                                             if (promiseError) {
                                                 console.log('error while getting image', err);
                                             } else {
-                                                //console.log(`image ${imgFile} edited.`);
+                                                console.log('image ' + imgFile + ' added.');
                                                 user.addImage(imgFile);
                                             }
 
@@ -252,9 +267,9 @@ var getNewsImages = function () {
         }, _callee5, undefined);
     }));
 
-    return function getNewsImages(_x9) {
+    return function getNewsImages(_x10) {
         return _ref5.apply(this, arguments);
     };
 }();
 
-//# sourceMappingURL=index-compiled.js.map
+//# sourceMappingURL=index.js.map
