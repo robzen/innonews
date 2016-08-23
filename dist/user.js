@@ -27,9 +27,9 @@ function User(ip, userAgent) {
             case 'IP111':
             case 'IP222':
             case 'IP241':
-                return { width: 320, height: 240, paddingBottom: 40 };
+                return { width: 320, height: 240, paddingBottom: 34 };
             case 'IP232':
-                return { width: 480, height: 272, paddingBottom: 40 };
+                return { width: 480, height: 272, paddingBottom: 34 };
         }
 
         return { width: 400, height: 300, paddingBottom: 0 };

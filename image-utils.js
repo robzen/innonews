@@ -13,24 +13,29 @@ ImageUtils.prototype.download = (imageUrl, fileName) => {
             if(err) {
                 reject(err);
             } else {
-                //extract extension from header and use it for the filename
-                let extension = response.headers['content-type'].split('/')[1];
-                let fileNameWithExtension = fileName + '.' + extension;
+                let contentType = response.headers['content-type'];
+                if(contentType) {
+                    //extract extension from header and use it for the filename
+                    let extension = contentType.split('/')[1];
+                    let fileNameWithExtension = fileName + '.' + extension;
 
-                createNeededFolders(fileName)
-                    .then(() => {
-                        //save as image
-                        fs.writeFile(fileNameWithExtension, body, 'binary', err => {
-                            if(err) {
-                                reject('error while writing file: '+err);
-                            } else {
-                                resolve(fileNameWithExtension);
-                            }
+                    createNeededFolders(fileName)
+                        .then(() => {
+                            //save as image
+                            fs.writeFile(fileNameWithExtension, body, 'binary', err => {
+                                if(err) {
+                                    reject('error while writing file: '+err);
+                                } else {
+                                    resolve(fileNameWithExtension);
+                                }
+                            });
+                        })
+                        .catch(err => {
+                            reject('error while creating necessary folders: '+err);
                         });
-                    })
-                    .catch(err => {
-                        reject('error while creating necessary folders: '+err);
-                    });
+                } else {
+                    reject('no content-type in header!');
+                }
             }
         });
     });
@@ -77,7 +82,9 @@ ImageUtils.prototype.edit = (imgFile, width, height, paddingBottom, text) => {
 
 ImageUtils.prototype.deleteImages = async imageFolder => {
     return new Promise((resolve, reject) => {
-        fs.readdir(imageFolder, (err, files) => {
+        resolve(0);
+        //TODO: fehler beheben
+        /*fs.readdir(imageFolder, (err, files) => {
             if(err) {
                 reject('error while deleting images: '+err);
             } else {
@@ -95,7 +102,7 @@ ImageUtils.prototype.deleteImages = async imageFolder => {
                     });
                 }
             }
-        });
+        });*/
     });
 };
 

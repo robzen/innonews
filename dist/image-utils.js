@@ -17,24 +17,29 @@ ImageUtils.prototype.download = function (imageUrl, fileName) {
             if (err) {
                 reject(err);
             } else {
-                (function () {
-                    //extract extension from header and use it for the filename
-                    var extension = response.headers['content-type'].split('/')[1];
-                    var fileNameWithExtension = fileName + '.' + extension;
+                var contentType = response.headers['content-type'];
+                if (contentType) {
+                    (function () {
+                        //extract extension from header and use it for the filename
+                        var extension = contentType.split('/')[1];
+                        var fileNameWithExtension = fileName + '.' + extension;
 
-                    createNeededFolders(fileName).then(function () {
-                        //save as image
-                        fs.writeFile(fileNameWithExtension, body, 'binary', function (err) {
-                            if (err) {
-                                reject('error while writing file: ' + err);
-                            } else {
-                                resolve(fileNameWithExtension);
-                            }
+                        createNeededFolders(fileName).then(function () {
+                            //save as image
+                            fs.writeFile(fileNameWithExtension, body, 'binary', function (err) {
+                                if (err) {
+                                    reject('error while writing file: ' + err);
+                                } else {
+                                    resolve(fileNameWithExtension);
+                                }
+                            });
+                        }).catch(function (err) {
+                            reject('error while creating necessary folders: ' + err);
                         });
-                    }).catch(function (err) {
-                        reject('error while creating necessary folders: ' + err);
-                    });
-                })();
+                    })();
+                } else {
+                    reject('no content-type in header!');
+                }
             }
         });
     });
@@ -80,27 +85,26 @@ ImageUtils.prototype.deleteImages = function () {
                 switch (_context.prev = _context.next) {
                     case 0:
                         return _context.abrupt('return', new Promise(function (resolve, reject) {
-                            fs.readdir(imageFolder, function (err, files) {
-                                if (err) {
-                                    reject('error while deleting images: ' + err);
+                            resolve(0);
+                            //TODO: fehler beheben
+                            /*fs.readdir(imageFolder, (err, files) => {
+                                if(err) {
+                                    reject('error while deleting images: '+err);
                                 } else {
-                                    if (files.length <= 0) {
+                                    if(files.length <= 0) {
                                         resolve(0);
                                     } else {
-                                        files.forEach(function (fileName, i) {
-                                            fs.unlink(imageFolder + '/' + fileName, function (err) {
-                                                if (err) {
-                                                    console.log('could not delete file ' + fileName);
-                                                }
+                                        files.forEach((fileName, i) => {
+                                            fs.unlink(imageFolder+'/'+fileName, err => {
+                                                if(err) { console.log('could not delete file '+fileName); }
                                             });
-
-                                            if (i + 1 >= files.length) {
+                                              if(i+1 >= files.length) {
                                                 resolve(files.length);
                                             }
                                         });
                                     }
                                 }
-                            });
+                            });*/
                         }));
 
                     case 1:
