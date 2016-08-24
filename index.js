@@ -26,10 +26,10 @@ app.use(async (ctx, next) => {
 
 //user handling
 app.use(async (ctx, next) => {
-    let ip = ctx.headers['host'].split(':')[0];
+    let ip = ctx.request.ip.replace(/\W/g, '-');
     let userAgent = ctx.headers['user-agent'];
 
-    //TODO: apply settings provided via GET ?source=spiegel&update=5
+    //TODO: apply settings provided via GET ?source=spiegel&sortBy=top&update=5
 
     ctx.state.user = await getUser(ipUsers, ip, userAgent);
 
@@ -39,15 +39,14 @@ app.use(async (ctx, next) => {
 app.use(router.routes());
 
 router.get('/', async (ctx, next) => {
-//update news images if updateInterval time is reached
+    await send(ctx, ctx.state.user.getNextImage());
+
+    //update news images if updateInterval time is reached
     let updateInterval = ctx.state.user.getSettings().updateMinutes;
     let lastUpdate = ctx.state.user.getLastUpdate();
     if(lastUpdate + updateInterval*60*1000 <= Date.now()) {
-        await imageUtils.deleteImages('images/'+ctx.state.user.getIp()); //delete old images
-        await getNewsImages(ctx.state.user);
+        getNewsImages(ctx.state.user);
     }
-
-    await send(ctx, ctx.state.user.getNextImage());
 });
 
 //start server
@@ -66,7 +65,6 @@ const getUser = async (users, ip, userAgent) => {
     let newUser = new User(ip, userAgent);
     users.push(newUser);
     console.log(`new user registered: IP: ${ip}, Innovaphone Version: ${newUser.getInnovaphoneVersion()}`);
-    await imageUtils.deleteImages('images/'+newUser.getIp());  //delete old images
     await getNewsImages(newUser);
 
     return newUser;
@@ -76,7 +74,7 @@ const getNewsImages = async user => {
     console.log('updating images for user: '+user.getIp());
 
     return new Promise((resolve, reject) => {
-        news.get(user.getSettings().newsSource, 'top').then(newsResponse => {
+        news.get(user.getSettings().newsSource, user.getSettings().newsSortBy).then(newsResponse => {
             let displaySettings = user.getDisplaySettings();
 
             user.setLastUpdate(Date.now());
@@ -101,7 +99,9 @@ const getNewsImages = async user => {
                             if(i+1 >= newsResponse.articles.length) {
                                 resolve();
                             }
-                        });
+                        }).catch(err => {
+                            reject('error while downloading news: '+err);
+                        })
                 } else {
                     //check if done
                     if(i+1 >= newsResponse.articles.length) {

@@ -7,7 +7,7 @@ var API_KEY = 'b6d5a008ad5443758ea6997487b04ee6';
 function News() {}
 
 News.prototype.get = function (source, sortBy) {
-    source = source || 'spiegel-online';
+    source = source || 'google-news';
     sortBy = sortBy || 'latest';
 
     return new Promise(function (resolve, reject) {

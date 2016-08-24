@@ -82,10 +82,10 @@ app.use(function () {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
-                        ip = ctx.headers['host'].split(':')[0];
+                        ip = ctx.request.ip.replace(/\W/g, '-');
                         userAgent = ctx.headers['user-agent'];
 
-                        //TODO: apply settings provided via GET ?source=spiegel&update=5
+                        //TODO: apply settings provided via GET ?source=spiegel&sortBy=top&update=5
 
                         _context2.next = 4;
                         return getUser(ipUsers, ip, userAgent);
@@ -117,27 +117,20 @@ router.get('/', function () {
             while (1) {
                 switch (_context3.prev = _context3.next) {
                     case 0:
+                        _context3.next = 2;
+                        return (0, _koaSend2.default)(ctx, ctx.state.user.getNextImage());
+
+                    case 2:
+
                         //update news images if updateInterval time is reached
                         updateInterval = ctx.state.user.getSettings().updateMinutes;
                         lastUpdate = ctx.state.user.getLastUpdate();
 
-                        if (!(lastUpdate + updateInterval * 60 * 1000 <= Date.now())) {
-                            _context3.next = 7;
-                            break;
+                        if (lastUpdate + updateInterval * 60 * 1000 <= Date.now()) {
+                            getNewsImages(ctx.state.user);
                         }
 
-                        _context3.next = 5;
-                        return imageUtils.deleteImages('images/' + ctx.state.user.getIp());
-
                     case 5:
-                        _context3.next = 7;
-                        return getNewsImages(ctx.state.user);
-
-                    case 7:
-                        _context3.next = 9;
-                        return (0, _koaSend2.default)(ctx, ctx.state.user.getNextImage());
-
-                    case 9:
                     case 'end':
                         return _context3.stop();
                 }
@@ -191,16 +184,12 @@ var getUser = function () {
                         users.push(newUser);
                         console.log('new user registered: IP: ' + ip + ', Innovaphone Version: ' + newUser.getInnovaphoneVersion());
                         _context4.next = 13;
-                        return imageUtils.deleteImages('images/' + newUser.getIp());
-
-                    case 13:
-                        _context4.next = 15;
                         return getNewsImages(newUser);
 
-                    case 15:
+                    case 13:
                         return _context4.abrupt('return', newUser);
 
-                    case 16:
+                    case 14:
                     case 'end':
                         return _context4.stop();
                 }
@@ -222,7 +211,7 @@ var getNewsImages = function () {
                         console.log('updating images for user: ' + user.getIp());
 
                         return _context5.abrupt('return', new Promise(function (resolve, reject) {
-                            news.get(user.getSettings().newsSource, 'top').then(function (newsResponse) {
+                            news.get(user.getSettings().newsSource, user.getSettings().newsSortBy).then(function (newsResponse) {
                                 var displaySettings = user.getDisplaySettings();
 
                                 user.setLastUpdate(Date.now());
@@ -246,6 +235,8 @@ var getNewsImages = function () {
                                             if (i + 1 >= newsResponse.articles.length) {
                                                 resolve();
                                             }
+                                        }).catch(function (err) {
+                                            reject('error while downloading news: ' + err);
                                         });
                                     } else {
                                         //check if done

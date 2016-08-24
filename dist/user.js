@@ -3,7 +3,8 @@
 function User(ip, userAgent) {
     var lastUpdate = 0;
     var settings = {
-        newsSource: 'google-news',
+        newsSource: 'the-verge',
+        newsSortBy: 'latest',
         updateMinutes: 10
     };
     var imageFolder = {
@@ -27,9 +28,9 @@ function User(ip, userAgent) {
             case 'IP111':
             case 'IP222':
             case 'IP241':
-                return { width: 320, height: 240, paddingBottom: 34 };
+                return { width: 320, height: 240, paddingBottom: 40 };
             case 'IP232':
-                return { width: 480, height: 272, paddingBottom: 34 };
+                return { width: 480, height: 272, paddingBottom: 40 };
         }
 
         return { width: 400, height: 300, paddingBottom: 0 };
