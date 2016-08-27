@@ -57,6 +57,7 @@ function User(ip, userAgent) {
 
     this.setSettings = function (s) {
         if (s.newsSource) settings.newsSource = s.newsSource;
+        if (s.newsSortBy) settings.newsSortBy = s.newsSortBy;
         if (s.updateMinutes) settings.updateMinutes = s.updateMinutes;
     };
 

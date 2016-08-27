@@ -74,53 +74,34 @@ app.use(function () {
     };
 }());
 
-//user handling
-app.use(function () {
-    var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2(ctx, next) {
-        var ip, userAgent;
+app.use(router.routes());
+
+router.get('/:newsSource?/:newsSortBy?/:updateMinutes?', function () {
+    var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2(ctx) {
+        var ip, userAgent, updateInterval, lastUpdate;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
+                        //TODO: update images if settings have changed + change settings for existing users
+                        //user handling
                         ip = ctx.request.ip.replace(/\W/g, '-');
                         userAgent = ctx.headers['user-agent'];
 
-                        //TODO: apply settings provided via GET ?source=spiegel&sortBy=top&update=5
+                        console.log('request: ' + userAgent + ' - newsSource:' + ctx.params.newsSource + ', newsSortBy:' + ctx.params.newsSortBy + ', updateMinutes:' + ctx.params.updateMinutes);
+                        _context2.next = 5;
+                        return getUser(ipUsers, ip, userAgent, {
+                            newsSource: ctx.params.newsSource,
+                            newsSortBy: ctx.params.newsSortBy,
+                            updateMinutes: ctx.params.updateMinutes
+                        });
 
-                        _context2.next = 4;
-                        return getUser(ipUsers, ip, userAgent);
-
-                    case 4:
+                    case 5:
                         ctx.state.user = _context2.sent;
-                        _context2.next = 7;
-                        return next();
-
-                    case 7:
-                    case 'end':
-                        return _context2.stop();
-                }
-            }
-        }, _callee2, undefined);
-    }));
-
-    return function (_x3, _x4) {
-        return _ref2.apply(this, arguments);
-    };
-}());
-
-app.use(router.routes());
-
-router.get('/', function () {
-    var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(ctx, next) {
-        var updateInterval, lastUpdate;
-        return regeneratorRuntime.wrap(function _callee3$(_context3) {
-            while (1) {
-                switch (_context3.prev = _context3.next) {
-                    case 0:
-                        _context3.next = 2;
+                        _context2.next = 8;
                         return (0, _koaSend2.default)(ctx, ctx.state.user.getNextImage());
 
-                    case 2:
+                    case 8:
 
                         //update news images if updateInterval time is reached
                         updateInterval = ctx.state.user.getSettings().updateMinutes;
@@ -130,50 +111,50 @@ router.get('/', function () {
                             getNewsImages(ctx.state.user);
                         }
 
-                    case 5:
+                    case 11:
                     case 'end':
-                        return _context3.stop();
+                        return _context2.stop();
                 }
             }
-        }, _callee3, undefined);
+        }, _callee2, undefined);
     }));
 
-    return function (_x5, _x6) {
-        return _ref3.apply(this, arguments);
+    return function (_x3) {
+        return _ref2.apply(this, arguments);
     };
 }());
 
 //start server
-app.listen(3000);
+app.listen(port);
 console.log('listening on port ' + port);
 
 var getUser = function () {
-    var _ref4 = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(users, ip, userAgent) {
+    var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(users, ip, userAgent, givenSettings) {
         var i, existingUser, newUser;
-        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+        return regeneratorRuntime.wrap(function _callee3$(_context3) {
             while (1) {
-                switch (_context4.prev = _context4.next) {
+                switch (_context3.prev = _context3.next) {
                     case 0:
                         i = 0;
 
                     case 1:
                         if (!(i < users.length)) {
-                            _context4.next = 8;
+                            _context3.next = 8;
                             break;
                         }
 
                         existingUser = users[i];
 
                         if (!(existingUser.getIp() === ip)) {
-                            _context4.next = 5;
+                            _context3.next = 5;
                             break;
                         }
 
-                        return _context4.abrupt('return', existingUser);
+                        return _context3.abrupt('return', existingUser);
 
                     case 5:
                         i++;
-                        _context4.next = 1;
+                        _context3.next = 1;
                         break;
 
                     case 8:
@@ -181,36 +162,37 @@ var getUser = function () {
                         //register new user and download news images
                         newUser = new _user2.default(ip, userAgent);
 
+                        newUser.setSettings(givenSettings);
                         users.push(newUser);
-                        console.log('new user registered: IP: ' + ip + ', Innovaphone Version: ' + newUser.getInnovaphoneVersion());
-                        _context4.next = 13;
+                        console.log('new user registered: IP: ' + ip + ', Innovaphone Version: ' + newUser.getInnovaphoneVersion() + ', Settings: ' + JSON.stringify(newUser.getSettings()));
+                        _context3.next = 14;
                         return getNewsImages(newUser);
 
-                    case 13:
-                        return _context4.abrupt('return', newUser);
-
                     case 14:
+                        return _context3.abrupt('return', newUser);
+
+                    case 15:
                     case 'end':
-                        return _context4.stop();
+                        return _context3.stop();
                 }
             }
-        }, _callee4, undefined);
+        }, _callee3, undefined);
     }));
 
-    return function getUser(_x7, _x8, _x9) {
-        return _ref4.apply(this, arguments);
+    return function getUser(_x4, _x5, _x6, _x7) {
+        return _ref3.apply(this, arguments);
     };
 }();
 
 var getNewsImages = function () {
-    var _ref5 = _asyncToGenerator(regeneratorRuntime.mark(function _callee5(user) {
-        return regeneratorRuntime.wrap(function _callee5$(_context5) {
+    var _ref4 = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(user) {
+        return regeneratorRuntime.wrap(function _callee4$(_context4) {
             while (1) {
-                switch (_context5.prev = _context5.next) {
+                switch (_context4.prev = _context4.next) {
                     case 0:
                         console.log('updating images for user: ' + user.getIp());
 
-                        return _context5.abrupt('return', new Promise(function (resolve, reject) {
+                        return _context4.abrupt('return', new Promise(function (resolve, reject) {
                             news.get(user.getSettings().newsSource, user.getSettings().newsSortBy).then(function (newsResponse) {
                                 var displaySettings = user.getDisplaySettings();
 
@@ -252,14 +234,14 @@ var getNewsImages = function () {
 
                     case 2:
                     case 'end':
-                        return _context5.stop();
+                        return _context4.stop();
                 }
             }
-        }, _callee5, undefined);
+        }, _callee4, undefined);
     }));
 
-    return function getNewsImages(_x10) {
-        return _ref5.apply(this, arguments);
+    return function getNewsImages(_x8) {
+        return _ref4.apply(this, arguments);
     };
 }();
 

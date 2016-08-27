@@ -24,21 +24,20 @@ app.use(async (ctx, next) => {
 	}
 });
 
-//user handling
-app.use(async (ctx, next) => {
-    let ip = ctx.request.ip.replace(/\W/g, '-');
-    let userAgent = ctx.headers['user-agent'];
-
-    //TODO: apply settings provided via GET ?source=spiegel&sortBy=top&update=5
-
-    ctx.state.user = await getUser(ipUsers, ip, userAgent);
-
-    await next();
-});
-
 app.use(router.routes());
 
-router.get('/', async (ctx, next) => {
+router.get('/:newsSource?/:newsSortBy?/:updateMinutes?', async (ctx) => {
+    //TODO: update images if settings have changed + change settings for existing users
+    //user handling
+    let ip = ctx.request.ip.replace(/\W/g, '-');
+    let userAgent = ctx.headers['user-agent'];
+    console.log(`request: ${userAgent} - newsSource:${ctx.params.newsSource}, newsSortBy:${ctx.params.newsSortBy}, updateMinutes:${ctx.params.updateMinutes}`);
+    ctx.state.user = await getUser(ipUsers, ip, userAgent, {
+        newsSource: ctx.params.newsSource,
+        newsSortBy: ctx.params.newsSortBy,
+        updateMinutes: ctx.params.updateMinutes
+    });
+
     await send(ctx, ctx.state.user.getNextImage());
 
     //update news images if updateInterval time is reached
@@ -50,11 +49,10 @@ router.get('/', async (ctx, next) => {
 });
 
 //start server
-app.listen(3000);
+app.listen(port);
 console.log('listening on port '+port);
 
-
-const getUser = async (users, ip, userAgent) => {
+const getUser = async (users, ip, userAgent, givenSettings) => {
     for(let i=0; i<users.length; i++) {
         let existingUser = users[i];
 
@@ -63,8 +61,9 @@ const getUser = async (users, ip, userAgent) => {
 
     //register new user and download news images
     let newUser = new User(ip, userAgent);
+    newUser.setSettings(givenSettings);
     users.push(newUser);
-    console.log(`new user registered: IP: ${ip}, Innovaphone Version: ${newUser.getInnovaphoneVersion()}`);
+    console.log(`new user registered: IP: ${ip}, Innovaphone Version: ${newUser.getInnovaphoneVersion()}, Settings: ${JSON.stringify(newUser.getSettings())}`);
     await getNewsImages(newUser);
 
     return newUser;

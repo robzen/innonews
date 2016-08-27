@@ -43,7 +43,7 @@ ImageUtils.prototype.download = (imageUrl, fileName) => {
 
 ImageUtils.prototype.edit = (imgFile, width, height, paddingBottom, text) => {
     const txtPadding = 3;
-    const backgroundImgFileName = 'txtBg.png';
+    const backgroundImgFileName = 'bg.png';
 
     return new Promise((resolve, reject) => {
         Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
@@ -51,35 +51,49 @@ ImageUtils.prototype.edit = (imgFile, width, height, paddingBottom, text) => {
                 const textLines = countLines(font, width, text);
                 const textHeight = textLines * font.common.lineHeight;
 
-                return Jimp.read(imgFile)
-                    .then(img => {
-                        //resize the image
-                        img.cover(width, height - paddingBottom/*, Jimp.VERTICAL_ALIGN_TOP*/).quality(100);
-                        return img;
-                    })
-                    .then(img => {
-                        //add background image at the bottom
-                        return Jimp.read(backgroundImgFileName)
-                            .then((txtBgImg) => {
-                                return img.composite(txtBgImg, -3/*for seamless pattern*/, height - textHeight - paddingBottom - txtPadding * 2);
-                            });
-                    })
-                    .then(img => {
-                        //write text into the image
-                        return img.print(font, txtPadding, height - textHeight - paddingBottom - txtPadding, text, width);
-                    })
-                    .then(img => {
-                        //save edited image
-                        img.write(imgFile);
-                        resolve(imgFile);
+                return Jimp.read(backgroundImgFileName)
+                    .then(bgImg => {
+                        return bgImg.crop(0, 0, width, height);
+                    }).then(croppedBg => {
+                        Jimp.read(imgFile).then(newsImg => {
+                            return newsImg.cover(width, height - paddingBottom - textHeight - txtPadding*2);
+                        }).then(coveredNewsImg => {
+                            return croppedBg.composite(coveredNewsImg, 0, 0);
+                        }).then(finalImage => {
+                            return finalImage.print(font, txtPadding, height - textHeight - paddingBottom - txtPadding, text, width);
+                        }).then(printedImage => {
+                            printedImage.write(imgFile);
+                            resolve(imgFile);
+                        }).catch(err => {
+                            reject(err);
+                        });
                     });
             }).catch(err => {
-            reject(err);
+                reject(err);
         });
-
-
     });
 };
+
+/*ImageUtils.prototype.getErrorImage = (width, height) => {
+    const errorImgFileName = 'error.png';
+
+    return new Promise((resolve, reject) => {
+        Jimp.read(errorImgFileName)
+            .then(errorImg => {
+                return errorImg.resize(width, height);
+            }).then(resizedErrImg => {
+                resizedErrImg.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
+                    if(err) {
+                        reject(err);
+                    } else {
+                        resolve(buffer);
+                    }
+                });
+            }).catch(err => {
+                    reject(err);
+            })
+    });
+};*/
 
 function createNeededFolders(filePath) {
     return new Promise((resolve, reject) => {

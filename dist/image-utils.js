@@ -45,35 +45,55 @@ ImageUtils.prototype.download = function (imageUrl, fileName) {
 
 ImageUtils.prototype.edit = function (imgFile, width, height, paddingBottom, text) {
     var txtPadding = 3;
-    var backgroundImgFileName = 'txtBg.png';
+    var backgroundImgFileName = 'bg.png';
 
     return new Promise(function (resolve, reject) {
         Jimp.loadFont(Jimp.FONT_SANS_16_WHITE).then(function (font) {
             var textLines = countLines(font, width, text);
             var textHeight = textLines * font.common.lineHeight;
 
-            return Jimp.read(imgFile).then(function (img) {
-                //resize the image
-                img.cover(width, height - paddingBottom /*, Jimp.VERTICAL_ALIGN_TOP*/).quality(100);
-                return img;
-            }).then(function (img) {
-                //add background image at the bottom
-                return Jimp.read(backgroundImgFileName).then(function (txtBgImg) {
-                    return img.composite(txtBgImg, -3 /*for seamless pattern*/, height - textHeight - paddingBottom - txtPadding * 2);
+            return Jimp.read(backgroundImgFileName).then(function (bgImg) {
+                return bgImg.crop(0, 0, width, height);
+            }).then(function (croppedBg) {
+                Jimp.read(imgFile).then(function (newsImg) {
+                    return newsImg.cover(width, height - paddingBottom - textHeight - txtPadding * 2);
+                }).then(function (coveredNewsImg) {
+                    return croppedBg.composite(coveredNewsImg, 0, 0);
+                }).then(function (finalImage) {
+                    return finalImage.print(font, txtPadding, height - textHeight - paddingBottom - txtPadding, text, width);
+                }).then(function (printedImage) {
+                    printedImage.write(imgFile);
+                    resolve(imgFile);
+                }).catch(function (err) {
+                    reject(err);
                 });
-            }).then(function (img) {
-                //write text into the image
-                return img.print(font, txtPadding, height - textHeight - paddingBottom - txtPadding, text, width);
-            }).then(function (img) {
-                //save edited image
-                img.write(imgFile);
-                resolve(imgFile);
             });
         }).catch(function (err) {
             reject(err);
         });
     });
 };
+
+/*ImageUtils.prototype.getErrorImage = (width, height) => {
+    const errorImgFileName = 'error.png';
+
+    return new Promise((resolve, reject) => {
+        Jimp.read(errorImgFileName)
+            .then(errorImg => {
+                return errorImg.resize(width, height);
+            }).then(resizedErrImg => {
+                resizedErrImg.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
+                    if(err) {
+                        reject(err);
+                    } else {
+                        resolve(buffer);
+                    }
+                });
+            }).catch(err => {
+                    reject(err);
+            })
+    });
+};*/
 
 function createNeededFolders(filePath) {
     return new Promise(function (resolve, reject) {
