@@ -76,19 +76,18 @@ app.use(function () {
 
 app.use(router.routes());
 
-router.get('/:newsSource?/:newsSortBy?/:updateMinutes?', function () {
+router.get('/news/:newsSource?/:newsSortBy?/:updateMinutes?', function () {
     var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2(ctx) {
         var ip, userAgent, updateInterval, lastUpdate;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
-                        //TODO: update images if settings have changed + change settings for existing users
                         //user handling
                         ip = ctx.request.ip.replace(/\W/g, '-');
                         userAgent = ctx.headers['user-agent'];
 
-                        console.log('request: ' + userAgent + ' - newsSource:' + ctx.params.newsSource + ', newsSortBy:' + ctx.params.newsSortBy + ', updateMinutes:' + ctx.params.updateMinutes);
+                        console.log('request: ' + userAgent + ' - newsSource: ' + (ctx.params.newsSource || '-') + ', newsSortBy: ' + (ctx.params.newsSortBy || '-') + ', updateMinutes: ' + (ctx.params.updateMinutes || '-'));
                         _context2.next = 5;
                         return getUser(ipUsers, ip, userAgent, {
                             newsSource: ctx.params.newsSource,
@@ -98,12 +97,21 @@ router.get('/:newsSource?/:newsSortBy?/:updateMinutes?', function () {
 
                     case 5:
                         ctx.state.user = _context2.sent;
-                        _context2.next = 8;
-                        return (0, _koaSend2.default)(ctx, ctx.state.user.getNextImage());
 
-                    case 8:
+                        if (!(ctx.state.user.getLastQuery() !== ctx.request.url)) {
+                            _context2.next = 10;
+                            break;
+                        }
 
-                        //update news images if updateInterval time is reached
+                        _context2.next = 9;
+                        return getNewsImages(ctx.state.user);
+
+                    case 9:
+                        ctx.state.user.setLastQuery(ctx.request.url);
+
+                    case 10:
+
+                        //update news images in the background if updateInterval time is reached
                         updateInterval = ctx.state.user.getSettings().updateMinutes;
                         lastUpdate = ctx.state.user.getLastUpdate();
 
@@ -111,7 +119,10 @@ router.get('/:newsSource?/:newsSortBy?/:updateMinutes?', function () {
                             getNewsImages(ctx.state.user);
                         }
 
-                    case 11:
+                        _context2.next = 15;
+                        return (0, _koaSend2.default)(ctx, ctx.state.user.getNextImage());
+
+                    case 15:
                     case 'end':
                         return _context2.stop();
                 }
@@ -139,25 +150,26 @@ var getUser = function () {
 
                     case 1:
                         if (!(i < users.length)) {
-                            _context3.next = 8;
+                            _context3.next = 9;
                             break;
                         }
 
                         existingUser = users[i];
 
                         if (!(existingUser.getIp() === ip)) {
-                            _context3.next = 5;
+                            _context3.next = 6;
                             break;
                         }
 
+                        existingUser.setSettings(givenSettings);
                         return _context3.abrupt('return', existingUser);
 
-                    case 5:
+                    case 6:
                         i++;
                         _context3.next = 1;
                         break;
 
-                    case 8:
+                    case 9:
 
                         //register new user and download news images
                         newUser = new _user2.default(ip, userAgent);
@@ -165,13 +177,10 @@ var getUser = function () {
                         newUser.setSettings(givenSettings);
                         users.push(newUser);
                         console.log('new user registered: IP: ' + ip + ', Innovaphone Version: ' + newUser.getInnovaphoneVersion() + ', Settings: ' + JSON.stringify(newUser.getSettings()));
-                        _context3.next = 14;
-                        return getNewsImages(newUser);
 
-                    case 14:
                         return _context3.abrupt('return', newUser);
 
-                    case 15:
+                    case 14:
                     case 'end':
                         return _context3.stop();
                 }
@@ -202,23 +211,33 @@ var getNewsImages = function () {
                                 newsResponse.articles.forEach(function (article, i) {
                                     if (article.urlToImage != null) {
                                         //only articles with images
-                                        imageUtils.download(article.urlToImage, 'images/' + user.getIp() + '/' + i).then(function (fileName) {
+                                        imageUtils.download(article.urlToImage, 'images/' + user.getIp() + '/' + user.getSettings().newsSource + '_' + i).then(function (fileName) {
                                             //console.log(`image ${i} downloaded.`);
-                                            return imageUtils.edit(fileName, displaySettings.width, displaySettings.height, displaySettings.paddingBottom, article.title);
-                                        }).then(function (imgFile, promiseError) {
-                                            if (promiseError) {
-                                                console.log('error while getting image', err);
-                                            } else {
+                                            imageUtils.edit(fileName, displaySettings.width, displaySettings.height, displaySettings.paddingBottom, article.title).then(function (imgFile) {
+                                                return imgFile;
+                                            }).then(function (imgFile) {
                                                 console.log('image ' + imgFile + ' added.');
                                                 user.addImage(imgFile);
-                                            }
+
+                                                //check if done
+                                                if (i + 1 >= newsResponse.articles.length) {
+                                                    resolve();
+                                                }
+                                            }).catch(function (err) {
+                                                console.log('error while editing image', err);
+
+                                                //check if done
+                                                if (i + 1 >= newsResponse.articles.length) {
+                                                    resolve();
+                                                }
+                                            });
+                                        }).catch(function (err) {
+                                            console.log('error while donwloading image', err);
 
                                             //check if done
                                             if (i + 1 >= newsResponse.articles.length) {
                                                 resolve();
                                             }
-                                        }).catch(function (err) {
-                                            reject('error while downloading news: ' + err);
                                         });
                                     } else {
                                         //check if done

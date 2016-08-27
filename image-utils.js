@@ -5,7 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const mkdirp = require('mkdirp');
 
-function ImageUtils() {}
+function ImageUtils() {
+}
 
 ImageUtils.prototype.download = (imageUrl, fileName) => {
     return new Promise((resolve, reject) => {
@@ -52,48 +53,55 @@ ImageUtils.prototype.edit = (imgFile, width, height, paddingBottom, text) => {
                 const textHeight = textLines * font.common.lineHeight;
 
                 return Jimp.read(backgroundImgFileName)
-                    .then(bgImg => {
-                        return bgImg.crop(0, 0, width, height);
-                    }).then(croppedBg => {
-                        Jimp.read(imgFile).then(newsImg => {
-                            return newsImg.cover(width, height - paddingBottom - textHeight - txtPadding*2);
-                        }).then(coveredNewsImg => {
-                            return croppedBg.composite(coveredNewsImg, 0, 0);
-                        }).then(finalImage => {
-                            return finalImage.print(font, txtPadding, height - textHeight - paddingBottom - txtPadding, text, width);
-                        }).then(printedImage => {
-                            printedImage.write(imgFile);
-                            resolve(imgFile);
-                        }).catch(err => {
-                            reject(err);
-                        });
-                    });
-            }).catch(err => {
+                           .then(bgImg => {
+                               return bgImg.crop(0, 0, width, height);
+                           })
+                           .then(croppedBg => {
+                               Jimp.read(imgFile)
+                                   .then(newsImg => {
+                                       return newsImg.cover(width, height - paddingBottom - textHeight - txtPadding * 2);
+                                   })
+                                   .then(coveredNewsImg => {
+                                       return croppedBg.composite(coveredNewsImg, 0, 0);
+                                   })
+                                   .then(finalImage => {
+                                       return finalImage.print(font, txtPadding, height - textHeight - paddingBottom - txtPadding, text, width);
+                                   })
+                                   .then(printedImage => {
+                                       printedImage.write(imgFile);
+                                       resolve(imgFile);
+                                   })
+                                   .catch(err => {
+                                       reject(err);
+                                   });
+                           });
+            })
+            .catch(err => {
                 reject(err);
-        });
+            });
     });
 };
 
 /*ImageUtils.prototype.getErrorImage = (width, height) => {
-    const errorImgFileName = 'error.png';
+ const errorImgFileName = 'error.png';
 
-    return new Promise((resolve, reject) => {
-        Jimp.read(errorImgFileName)
-            .then(errorImg => {
-                return errorImg.resize(width, height);
-            }).then(resizedErrImg => {
-                resizedErrImg.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
-                    if(err) {
-                        reject(err);
-                    } else {
-                        resolve(buffer);
-                    }
-                });
-            }).catch(err => {
-                    reject(err);
-            })
-    });
-};*/
+ return new Promise((resolve, reject) => {
+ Jimp.read(errorImgFileName)
+ .then(errorImg => {
+ return errorImg.resize(width, height);
+ }).then(resizedErrImg => {
+ resizedErrImg.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
+ if(err) {
+ reject(err);
+ } else {
+ resolve(buffer);
+ }
+ });
+ }).catch(err => {
+ reject(err);
+ })
+ });
+ };*/
 
 function createNeededFolders(filePath) {
     return new Promise((resolve, reject) => {

@@ -75,25 +75,25 @@ ImageUtils.prototype.edit = function (imgFile, width, height, paddingBottom, tex
 };
 
 /*ImageUtils.prototype.getErrorImage = (width, height) => {
-    const errorImgFileName = 'error.png';
+ const errorImgFileName = 'error.png';
 
-    return new Promise((resolve, reject) => {
-        Jimp.read(errorImgFileName)
-            .then(errorImg => {
-                return errorImg.resize(width, height);
-            }).then(resizedErrImg => {
-                resizedErrImg.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
-                    if(err) {
-                        reject(err);
-                    } else {
-                        resolve(buffer);
-                    }
-                });
-            }).catch(err => {
-                    reject(err);
-            })
-    });
-};*/
+ return new Promise((resolve, reject) => {
+ Jimp.read(errorImgFileName)
+ .then(errorImg => {
+ return errorImg.resize(width, height);
+ }).then(resizedErrImg => {
+ resizedErrImg.getBuffer(Jimp.MIME_PNG, (err, buffer) => {
+ if(err) {
+ reject(err);
+ } else {
+ resolve(buffer);
+ }
+ });
+ }).catch(err => {
+ reject(err);
+ })
+ });
+ };*/
 
 function createNeededFolders(filePath) {
     return new Promise(function (resolve, reject) {

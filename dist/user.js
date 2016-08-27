@@ -1,10 +1,11 @@
 'use strict';
 
 function User(ip, userAgent) {
-    var lastUpdate = 0;
+    var lastUpdate = 0,
+        lastQuery = null;
     var settings = {
         newsSource: 'the-verge',
-        newsSortBy: 'latest',
+        newsSortBy: ' ',
         updateMinutes: 10
     };
     var imageFolder = {
@@ -50,6 +51,12 @@ function User(ip, userAgent) {
     };
     this.setLastUpdate = function (timestamp) {
         lastUpdate = timestamp;
+    };
+    this.getLastQuery = function () {
+        return lastQuery;
+    };
+    this.setLastQuery = function (query) {
+        lastQuery = query;
     };
     this.getSettings = function () {
         return settings;

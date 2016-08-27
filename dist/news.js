@@ -8,7 +8,7 @@ function News() {}
 
 News.prototype.get = function (source, sortBy) {
     source = source || 'google-news';
-    sortBy = sortBy || 'latest';
+    sortBy = sortBy || '';
 
     return new Promise(function (resolve, reject) {
         request.get({

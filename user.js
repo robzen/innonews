@@ -1,8 +1,8 @@
 function User(ip, userAgent) {
-    let lastUpdate = 0;
+    let lastUpdate = 0, lastQuery = null;
     let settings = {
         newsSource: 'the-verge',
-        newsSortBy: 'latest',
+        newsSortBy: ' ',
         updateMinutes: 10
     };
     let imageFolder = {
@@ -14,7 +14,7 @@ function User(ip, userAgent) {
         let innovaphoneVersionRegex = /^innovaphone-(.+)\//;
         let regexArr = innovaphoneVersionRegex.exec(userAgent);
 
-        if(regexArr && regexArr.length >= 2) {
+        if (regexArr && regexArr.length >= 2) {
             return regexArr[1];
         } else {
             return 'unknown';
@@ -22,29 +22,47 @@ function User(ip, userAgent) {
     })(userAgent);
 
     const displaySettings = (innovaphoneVersion => {
-        switch(innovaphoneVersion) {
+        switch (innovaphoneVersion) {
             case 'IP111':
             case 'IP222':
             case 'IP241':
-                return { width: 320, height: 240, paddingBottom: 40 };
+                return {width: 320, height: 240, paddingBottom: 40};
             case 'IP232':
-                return { width: 480, height: 272, paddingBottom: 40 };
+                return {width: 480, height: 272, paddingBottom: 40};
         }
 
-        return { width: 400, height: 300, paddingBottom: 0 };
+        return {width: 400, height: 300, paddingBottom: 0};
     })(innovaphoneVersion);
 
-    this.getIp = () => { return ip; };
-    this.getInnovaphoneVersion = () => { return innovaphoneVersion; };
-    this.getDisplaySettings = () => { return displaySettings; };
-    this.getLastUpdate = () => { return lastUpdate; };
-    this.setLastUpdate = timestamp => { lastUpdate = timestamp };
-    this.getSettings = () => { return settings; };
+    this.getIp = () => {
+        return ip;
+    };
+    this.getInnovaphoneVersion = () => {
+        return innovaphoneVersion;
+    };
+    this.getDisplaySettings = () => {
+        return displaySettings;
+    };
+    this.getLastUpdate = () => {
+        return lastUpdate;
+    };
+    this.setLastUpdate = timestamp => {
+        lastUpdate = timestamp
+    };
+    this.getLastQuery = () => {
+        return lastQuery;
+    };
+    this.setLastQuery = query => {
+        lastQuery = query;
+    };
+    this.getSettings = () => {
+        return settings;
+    };
 
     this.setSettings = s => {
-        if(s.newsSource) settings.newsSource = s.newsSource;
-        if(s.newsSortBy) settings.newsSortBy = s.newsSortBy;
-        if(s.updateMinutes) settings.updateMinutes = s.updateMinutes;
+        if (s.newsSource) settings.newsSource = s.newsSource;
+        if (s.newsSortBy) settings.newsSortBy = s.newsSortBy;
+        if (s.updateMinutes) settings.updateMinutes = s.updateMinutes;
     };
 
     this.resetImages = () => {
@@ -59,7 +77,7 @@ function User(ip, userAgent) {
     this.getNextImage = () => {
         let nextImage = 'error.png'; //TODO: passendes error bild für innovaphone display
 
-        if(imageFolder.files.length > 0) {
+        if (imageFolder.files.length > 0) {
             nextImage = imageFolder.files[imageFolder.activeIndex];
             imageFolder.activeIndex = ++imageFolder.activeIndex % imageFolder.files.length;
         }
