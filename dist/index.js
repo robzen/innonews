@@ -78,38 +78,39 @@ app.use(router.routes());
 
 router.get('/news/:newsSource?/:newsSortBy?/:updateMinutes?', function () {
     var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2(ctx) {
-        var ip, userAgent, updateInterval, lastUpdate;
+        var ip, formattedIp, userAgent, updateInterval, lastUpdate;
         return regeneratorRuntime.wrap(function _callee2$(_context2) {
             while (1) {
                 switch (_context2.prev = _context2.next) {
                     case 0:
-                        //user handling
-                        ip = ctx.request.ip.replace(/\W/g, '-');
+                        //user handling - behind a proxy? set X-Real-IP header with real ip address
+                        ip = ctx.headers['X-Real-IP'] || ctx.request.ip;
+                        formattedIp = ip.replace(/\W/g, '-');
                         userAgent = ctx.headers['user-agent'];
 
                         console.log('request: ' + userAgent + ' - newsSource: ' + (ctx.params.newsSource || '-') + ', newsSortBy: ' + (ctx.params.newsSortBy || '-') + ', updateMinutes: ' + (ctx.params.updateMinutes || '-'));
-                        _context2.next = 5;
-                        return getUser(ipUsers, ip, userAgent, {
+                        _context2.next = 6;
+                        return getUser(ipUsers, formattedIp, userAgent, {
                             newsSource: ctx.params.newsSource,
                             newsSortBy: ctx.params.newsSortBy,
                             updateMinutes: ctx.params.updateMinutes
                         });
 
-                    case 5:
+                    case 6:
                         ctx.state.user = _context2.sent;
 
                         if (!(ctx.state.user.getLastQuery() !== ctx.request.url)) {
-                            _context2.next = 10;
+                            _context2.next = 11;
                             break;
                         }
 
-                        _context2.next = 9;
+                        _context2.next = 10;
                         return getNewsImages(ctx.state.user);
 
-                    case 9:
+                    case 10:
                         ctx.state.user.setLastQuery(ctx.request.url);
 
-                    case 10:
+                    case 11:
 
                         //update news images in the background if updateInterval time is reached
                         updateInterval = ctx.state.user.getSettings().updateMinutes;
@@ -119,10 +120,10 @@ router.get('/news/:newsSource?/:newsSortBy?/:updateMinutes?', function () {
                             getNewsImages(ctx.state.user);
                         }
 
-                        _context2.next = 15;
+                        _context2.next = 16;
                         return (0, _koaSend2.default)(ctx, ctx.state.user.getNextImage());
 
-                    case 15:
+                    case 16:
                     case 'end':
                         return _context2.stop();
                 }
@@ -211,6 +212,9 @@ var getNewsImages = function () {
                                 newsResponse.articles.forEach(function (article, i) {
                                     if (article.urlToImage != null) {
                                         //only articles with images
+                                        //filter out unwanted stuff
+                                        article.title = filterText(article.title);
+
                                         imageUtils.download(article.urlToImage, 'images/' + user.getIp() + '/' + user.getSettings().newsSource + '_' + i).then(function (fileName) {
                                             //console.log(`image ${i} downloaded.`);
                                             imageUtils.edit(fileName, displaySettings.width, displaySettings.height, displaySettings.paddingBottom, article.title).then(function (imgFile) {
@@ -263,5 +267,11 @@ var getNewsImages = function () {
         return _ref4.apply(this, arguments);
     };
 }();
+
+var filterText = function filterText(text) {
+    text = text.replace(/ - SPIEGEL ONLINE$/i, '');
+
+    return text;
+};
 
 //# sourceMappingURL=index.js.map

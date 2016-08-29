@@ -17,7 +17,10 @@ ImageUtils.prototype.download = (imageUrl, fileName) => {
                 let contentType = response.headers['content-type'];
                 if (contentType) {
                     //extract extension from header and use it for the filename
-                    const extension = contentType.split('/')[1];
+                    const extension = (() => {
+                        const rawFileType = contentType.split('/')[1]; //can contain stuff like ;charset=UTF-8
+                        return rawFileType.split(';')[0]; //extracts image extension only -> jpeg
+                    })();
                     const fileNameWithExtension = fileName + '.' + extension;
 
                     createNeededFolders(fileName)
@@ -59,13 +62,13 @@ ImageUtils.prototype.edit = (imgFile, width, height, paddingBottom, text) => {
                            .then(croppedBg => {
                                Jimp.read(imgFile)
                                    .then(newsImg => {
-                                       return newsImg.cover(width, height - paddingBottom - textHeight - txtPadding * 2);
+                                       return newsImg.cover(width, height - paddingBottom - textHeight - txtPadding, Jimp.VERTICAL_ALIGN_TOP);
                                    })
                                    .then(coveredNewsImg => {
                                        return croppedBg.composite(coveredNewsImg, 0, 0);
                                    })
                                    .then(finalImage => {
-                                       return finalImage.print(font, txtPadding, height - textHeight - paddingBottom - txtPadding, text, width);
+                                       return finalImage.print(font, txtPadding, height - textHeight - paddingBottom, text, width);
                                    })
                                    .then(printedImage => {
                                        printedImage.write(imgFile);

@@ -27,11 +27,12 @@ app.use(async(ctx, next) => {
 app.use(router.routes());
 
 router.get('/news/:newsSource?/:newsSortBy?/:updateMinutes?', async(ctx) => {
-    //user handling
-    let ip = ctx.request.ip.replace(/\W/g, '-');
+    //user handling - behind a proxy? set X-Real-IP header with real ip address
+    let ip = ctx.headers['X-Real-IP'] || ctx.request.ip;
+    let formattedIp = ip.replace(/\W/g, '-');
     let userAgent = ctx.headers['user-agent'];
     console.log(`request: ${userAgent} - newsSource: ${ctx.params.newsSource || '-'}, newsSortBy: ${ctx.params.newsSortBy || '-'}, updateMinutes: ${ctx.params.updateMinutes || '-'}`);
-    ctx.state.user = await getUser(ipUsers, ip, userAgent, {
+    ctx.state.user = await getUser(ipUsers, formattedIp, userAgent, {
         newsSource: ctx.params.newsSource,
         newsSortBy: ctx.params.newsSortBy,
         updateMinutes: ctx.params.updateMinutes
@@ -89,6 +90,9 @@ const getNewsImages = async user => {
 
                 newsResponse.articles.forEach(function (article, i) {
                     if (article.urlToImage != null) { //only articles with images
+                        //filter out unwanted stuff
+                        article.title = filterText(article.title);
+
                         imageUtils.download(article.urlToImage, `images/${user.getIp()}/${user.getSettings().newsSource}_${i}`)
                                   .then(fileName => {
                                       //console.log(`image ${i} downloaded.`);
@@ -134,4 +138,10 @@ const getNewsImages = async user => {
                 reject('error while getting news: ' + err);
             });
     });
+};
+
+const filterText = text => {
+    text = text.replace(/ - SPIEGEL ONLINE$/i, '');
+
+    return text;
 };

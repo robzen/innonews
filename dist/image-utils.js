@@ -15,29 +15,36 @@ ImageUtils.prototype.download = function (imageUrl, fileName) {
             if (err) {
                 reject(err);
             } else {
-                var contentType = response.headers['content-type'];
-                if (contentType) {
-                    (function () {
-                        //extract extension from header and use it for the filename
-                        var extension = contentType.split('/')[1];
-                        var fileNameWithExtension = fileName + '.' + extension;
+                (function () {
+                    var contentType = response.headers['content-type'];
+                    if (contentType) {
+                        (function () {
+                            //extract extension from header and use it for the filename
+                            var extension = function () {
+                                var rawFileType = contentType.split('/')[1]; //can contain stuff like ;charset=UTF-8
+                                return rawFileType.split(';')[0]; //extracts image extension only -> jpeg
+                            }();
+                            var fileNameWithExtension = fileName + '.' + extension;
 
-                        createNeededFolders(fileName).then(function () {
-                            //save as image
-                            fs.writeFile(fileNameWithExtension, body, 'binary', function (err) {
-                                if (err) {
-                                    reject('error while writing file: ' + err);
-                                } else {
-                                    resolve(fileNameWithExtension);
-                                }
+                            createNeededFolders(fileName)
+                                .then(function () {
+                                    //save as image
+                                    fs.writeFile(fileNameWithExtension, body, 'binary', function (err) {
+                                        if (err) {
+                                            reject('error while writing file: ' + err);
+                                        } else {
+                                            resolve(fileNameWithExtension);
+                                        }
+                                    });
+                                })
+                                .catch(function (err) {
+                                    reject('error while creating necessary folders: ' + err);
                             });
-                        }).catch(function (err) {
-                            reject('error while creating necessary folders: ' + err);
-                        });
-                    })();
-                } else {
-                    reject('no content-type in header!');
-                }
+                        })();
+                    } else {
+                        reject('no content-type in header!');
+                    }
+                })();
             }
         });
     });
@@ -56,11 +63,11 @@ ImageUtils.prototype.edit = function (imgFile, width, height, paddingBottom, tex
                 return bgImg.crop(0, 0, width, height);
             }).then(function (croppedBg) {
                 Jimp.read(imgFile).then(function (newsImg) {
-                    return newsImg.cover(width, height - paddingBottom - textHeight - txtPadding * 2);
+                    return newsImg.cover(width, height - paddingBottom - textHeight - txtPadding, Jimp.VERTICAL_ALIGN_TOP);
                 }).then(function (coveredNewsImg) {
                     return croppedBg.composite(coveredNewsImg, 0, 0);
                 }).then(function (finalImage) {
-                    return finalImage.print(font, txtPadding, height - textHeight - paddingBottom - txtPadding, text, width);
+                    return finalImage.print(font, txtPadding, height - textHeight - paddingBottom, text, width);
                 }).then(function (printedImage) {
                     printedImage.write(imgFile);
                     resolve(imgFile);
